@@ -38,6 +38,20 @@ class Upsampler:
             dest_timestamps_filepath = os.path.join(self.dest_dir, reldirpath, self._timestamps_filename)
             self.upsample_sequence(sequence, dest_imgs_dir, dest_timestamps_filepath)
 
+# 修改upsample方法到生成数据集的格式
+    def upsample_new(self):
+        sequence_counter = 0
+        for src_absdirpath, dirnames, filenames in os.walk(self.src_dir):
+            sequence = get_sequence_or_none(src_absdirpath)
+            if sequence is None:
+                continue
+            sequence_counter += 1
+            print('Processing sequence number {}'.format(src_absdirpath))
+            reldirpath = os.path.relpath(src_absdirpath, self.src_dir)
+            dest_imgs_dir = os.path.join(self.dest_dir, reldirpath, imgs_dirname)
+            dest_timestamps_filepath = os.path.join(self.dest_dir, reldirpath, self._timestamps_filename)
+            self.upsample_sequence(sequence, dest_imgs_dir, dest_timestamps_filepath)
+
     def upsample_sequence(self, sequence: Sequence, dest_imgs_dir: str, dest_timestamps_filepath: str):
         os.makedirs(dest_imgs_dir, exist_ok=True)
         timestamps_list = list()
