@@ -1,4 +1,5 @@
 import argparse
+from asyncore import write
 from operator import sub
 import os
 import esim_torch
@@ -7,6 +8,10 @@ import glob
 import cv2
 import tqdm
 import torch
+
+from syn.syn_test import make_syn_frames
+from upsampling.utils import Upsampler
+from upsampling.utils.utils import fps_from_file
 
 
 def is_valid_dir(subdirs, files):
@@ -27,7 +32,6 @@ def process_dir(outdir, indir, args):
     timestamps_ns = torch.from_numpy(timestamps_ns).cuda()
 
     image_files = sorted(glob.glob(os.path.join(indir, "imgs", "*.png")))
-    # image_files = sorted(glob.glob(os.path.join(indir, "imgs", "*.jpg")))
     
     pbar = tqdm.tqdm(total=len(image_files)-1)
     num_events = 0
@@ -43,19 +47,11 @@ def process_dir(outdir, indir, args):
         # for the first image, no events are generated, so this needs to be skipped
         if sub_events is None:
             continue
-
-        # sub_events = {k: v.cpu() for k, v in sub_events.items()}    
-
         num_events += len(sub_events.T)
 
-
- 
         # do something with the events
-
         event_dict = list(sub_events.T.cpu().numpy())
         np.savetxt(os.path.join(outdir, "%010d.txt" % counter), event_dict,fmt='%s')
-
-        # np.savez(os.path.join(outdir, "%010d.npz" % counter), **sub_events)
         pbar.set_description(f"Num events generated: {num_events}")
         pbar.update(1)
         counter += 1
@@ -66,15 +62,30 @@ if __name__ == "__main__":
     parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.2)
     parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.2)
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
-    parser.add_argument("--input_dir", "-i", default="datasets/syn_test/upsampled")
-    parser.add_argument("--output_dir", "-o", default="datasets/syn_test/events")
     args = parser.parse_args()
 
+    ##step1 生成帧图像
+    img_path = "datasets/syn_test/img"
+    points_path = "datasets/syn_test/points"   
+    upsample_dir = "datasets/syn_test/upsampled"
+    events_dir = "datasets/syn_test/events"
 
+    make_syn_frames(img_path,points_path,100)
+
+    ##step1.1 加入fps文件
+    fps_file = os.path.join(img_path,"fps.txt")
+    with open(fps_file,"w+") as f: 
+        f.write('25')
+
+    ##step2 生成上采样
+    upsampler = Upsampler(input_dir=img_path, output_dir=upsample_dir)
+    upsampler.upsample_new()
+
+    ##step3 生成事件
     print(f"Generating events with cn={args.contrast_threshold_negative}, cp={args.contrast_threshold_positive} and rp={args.refractory_period_ns}")
 
-    for path, subdirs, files in os.walk(args.input_dir):
+    for path, subdirs, files in os.walk(upsample_dir):
         if is_valid_dir(subdirs, files):
-            output_folder = os.path.join(args.output_dir, os.path.relpath(path, args.input_dir))
+            output_folder = os.path.join(events_dir, os.path.relpath(path,upsample_dir))
 
             process_dir(output_folder, path, args)
