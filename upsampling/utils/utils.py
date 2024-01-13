@@ -1,9 +1,11 @@
+from ast import walk
+from genericpath import isfile
 import os
 from pathlib import Path
 from typing import Union
 
 from .const import fps_filename, imgs_dirname, video_formats
-from .dataset import Sequence, ImageSequence, VideoSequence
+from .dataset import ImageSequence_new, Sequence, ImageSequence, VideoSequence
 
 def is_video_file(filepath: str) -> bool:
     return Path(filepath).suffix.lower() in video_formats
@@ -52,4 +54,27 @@ def get_sequence_or_none(dirpath: str) -> Union[None, Sequence]:
         return VideoSequence(video_file)
     return None
 
+##以下为调整
 
+# 做出调整，以适应数据集格式
+def get_sequence_or_none_new(dirpath: str) -> Union[None, Sequence]:
+    fps_file = get_fps_file(dirpath)
+    imgs_seqs = []
+    if fps_file:
+        # Must be a sequence (either ImageSequence or VideoSequence)
+        fps = fps_from_file(fps_file)
+        imgs_dirs = get_imgs_directory_new(dirpath)
+        assert imgs_dirs is not None
+        for imgs_num_dir in imgs_dirs:
+            if os.path.isfile(os.path.join(dirpath,imgs_num_dir)):
+                continue
+            imgs_seqs.append(ImageSequence_new(imgs_dirpath=dirpath,imgs_num_name=imgs_num_dir,fps=fps))
+        return imgs_seqs
+    return None
+
+def get_imgs_directory_new(dirpath: str) -> Union[None, str]:
+    imgs_dirs = []
+    for (dir_path,dirnames,filenames) in os.walk(dirpath):
+        imgs_dirs.extend(dirnames)
+    imgs_dirs.sort(key=int)
+    return imgs_dirs

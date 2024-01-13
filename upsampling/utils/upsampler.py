@@ -8,7 +8,7 @@ from tqdm import tqdm
 from . import Sequence
 from .const import imgs_dirname
 from .interpolator import Interpolator
-from .utils import get_sequence_or_none
+from .utils import get_sequence_or_none, get_sequence_or_none_new
 
 
 class Upsampler:
@@ -42,15 +42,18 @@ class Upsampler:
     def upsample_new(self):
         sequence_counter = 0
         for src_absdirpath, dirnames, filenames in os.walk(self.src_dir):
-            sequence = get_sequence_or_none(src_absdirpath)
-            if sequence is None:
-                continue
-            sequence_counter += 1
-            print('Processing sequence number {}'.format(src_absdirpath))
-            reldirpath = os.path.relpath(src_absdirpath, self.src_dir)
-            dest_imgs_dir = os.path.join(self.dest_dir, reldirpath, imgs_dirname)
-            dest_timestamps_filepath = os.path.join(self.dest_dir, reldirpath, self._timestamps_filename)
-            self.upsample_sequence(sequence, dest_imgs_dir, dest_timestamps_filepath)
+            sequences = get_sequence_or_none_new(src_absdirpath)
+            if sequences is None:
+                    continue
+            for sequence in sequences:
+                if sequence is None:
+                    continue
+                sequence_counter += 1
+                print('Processing sequence number {}'.format(src_absdirpath+'/'+ sequence.imgs_num_name))
+
+                dest_imgs_dir = os.path.join(self.dest_dir, sequence.imgs_num_name,imgs_dirname)
+                dest_timestamps_filepath = os.path.join(self.dest_dir, sequence.imgs_num_name, self._timestamps_filename)
+                self.upsample_sequence(sequence, dest_imgs_dir, dest_timestamps_filepath)
 
     def upsample_sequence(self, sequence: Sequence, dest_imgs_dir: str, dest_timestamps_filepath: str):
         os.makedirs(dest_imgs_dir, exist_ok=True)

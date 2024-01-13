@@ -71,6 +71,14 @@ class ImageSequence(Sequence):
             return [os.path.join(self.imgs_dirpath, f) for f in file_names]
         return os.path.join(self.imgs_dirpath, file_names)
 
+##重新修改ImageSeq类
+class ImageSequence_new(ImageSequence):
+    def __init__(self, imgs_dirpath: str, imgs_num_name: str ,fps: float):
+        temp_path = os.path.join(imgs_dirpath,imgs_num_name)
+        super(ImageSequence_new,self).__init__(temp_path,fps)
+        
+        self.imgs_num_name = imgs_num_name
+
 
 class VideoSequence(Sequence):
     def __init__(self, video_filepath: str, fps: float=None):

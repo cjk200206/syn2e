@@ -17,10 +17,14 @@ def get_flags():
 
 
 def main():
-    flags = get_flags()
+    # flags = get_flags()
 
-    upsampler = Upsampler(input_dir=flags.input_dir, output_dir=flags.output_dir)
-    upsampler.upsample()
+    # upsampler = Upsampler(input_dir=flags.input_dir, output_dir=flags.output_dir)
+    # upsampler.upsample  ()
+
+    upsampler = Upsampler(input_dir="datasets/syn_test/img", output_dir="datasets/syn_test/upsampled")
+    upsampler.upsample_new()
+
 
 
 if __name__ == '__main__':
