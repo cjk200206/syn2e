@@ -8,7 +8,7 @@ import tqdm
 import torch
 from event_corner.event_corner import frame_corner_tube, judge_event_corner, save_corners
 
-from syn.syn_test import make_syn_frames
+import syn.syn_test as syn
 from upsampling.utils import Upsampler
 
 
@@ -58,50 +58,57 @@ def process_dir(outdir, indir, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("""Generate events from a high frequency video stream""")
-    parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.2)
-    parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.2)
+    parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.1)
+    parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.1)
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
     args = parser.parse_args()
 
-    ##step1 生成帧图像
-    img_root = "datasets/syn_test/img"
-    points_root = "datasets/syn_test/points"   
-    upsample_root = "datasets/syn_test/upsampled"
-    events_root = "datasets/syn_test/events"
-    event_corner_root = "datasets/syn_test/event_corners"
+    func_names = [
+        "syn_polygon"
+    ]
+    for func_name in func_names:
+        
+        ##step0 生成文件路径
+        img_root = "datasets/{}/img".format(func_name)
+        points_root = "datasets/{}/points".format(func_name)   
+        upsample_root = "datasets/{}/upsampled".format(func_name)
+        events_root = "datasets/{}/events".format(func_name)
+        event_corner_root = "datasets/{}/event_corners".format(func_name)
+        
+        ##step1 生成帧图像
+        func = getattr(syn,func_name)
+        func(img_root,points_root,100)
 
-    # make_syn_frames(img_root,points_root,100)
+        ##step1.1 加入fps文件
+        fps_file = os.path.join(img_root,"fps.txt")
+        with open(fps_file,"w+") as f: 
+            f.write('25') #帧率
 
-    # ##step1.1 加入fps文件
-    # fps_file = os.path.join(img_root,"fps.txt")
-    # with open(fps_file,"w+") as f: 
-    #     f.write('25') #帧率
+        ##step2 生成上采样
+        upsampler = Upsampler(input_dir=img_root, output_dir=upsample_root)
+        upsampler.upsample_new()
 
-    # ##step2 生成上采样
-    # upsampler = Upsampler(input_dir=img_root, output_dir=upsample_root)
-    # upsampler.upsample_new()
+        ##step3 生成事件
+        print(f"Generating events with cn={args.contrast_threshold_negative}, cp={args.contrast_threshold_positive} and rp={args.refractory_period_ns}")
 
-    # ##step3 生成事件
-    # print(f"Generating events with cn={args.contrast_threshold_negative}, cp={args.contrast_threshold_positive} and rp={args.refractory_period_ns}")
+        for path, subdirs, files in os.walk(upsample_root):
+            if is_valid_dir(subdirs, files):
+                output_folder = os.path.join(events_root, os.path.relpath(path,upsample_root))
 
-    # for path, subdirs, files in os.walk(upsample_root):
-    #     if is_valid_dir(subdirs, files):
-    #         output_folder = os.path.join(events_root, os.path.relpath(path,upsample_root))
+                process_dir(output_folder, path, args)
 
-    #         process_dir(output_folder, path, args)
+        ##step4 检测事件角点
+        for dirpath,subdirs,filenames in os.walk(points_root):
+            if len(subdirs) == 0 and len(filenames) != 0: #判断文件夹，当只含txt文件时，即最里侧文件夹
+                frame_corner_dir = dirpath
+                events_dir = os.path.join(events_root,os.path.relpath(dirpath,points_root))
+                event_corner_dir = os.path.join(event_corner_root,os.path.relpath(dirpath,points_root))
 
-    ##step4 检测事件角点
-    for dirpath,subdirs,filenames in os.walk(points_root):
-        if len(subdirs) == 0 and len(filenames) != 0: #判断文件夹，当只含txt文件时，即最里侧文件夹
-            frame_corner_dir = dirpath
-            events_dir = os.path.join(events_root,os.path.relpath(dirpath,points_root))
-            event_corner_dir = os.path.join(event_corner_root,os.path.relpath(dirpath,points_root))
-
-            print(str(event_corner_dir)+' processing...') 
-            tubes = frame_corner_tube(frame_corner_dir)
-            event_corners = judge_event_corner(tubes,events_dir)
-            save_corners(event_corners,event_corner_dir)
-            print(str(event_corner_dir)+' finished!') 
+                print(str(event_corner_dir)+' processing...') 
+                tubes = frame_corner_tube(frame_corner_dir)
+                event_corners = judge_event_corner(tubes,events_dir)
+                save_corners(event_corners,event_corner_dir)
+                print(str(event_corner_dir)+' finished!') 
         
 
 

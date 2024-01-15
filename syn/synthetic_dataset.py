@@ -1,4 +1,5 @@
 """ Module used to generate geometrical synthetic shapes """
+"""经过修改，所有生成中都return了color，保持生成图像的一致性"""
 
 from random import randint
 import cv2 as cv
@@ -204,7 +205,7 @@ def draw_polygon(img, max_sides=8):
     corners = points.reshape((-1, 1, 2))
     col = get_random_color(int(np.mean(img)))
     cv.fillPoly(img, [corners], col)
-    return points
+    return points,col
 
 
 def overlap(center, rad, centers, rads):
@@ -695,7 +696,7 @@ def draw_interest_points(img, points):
     return img_rgb
 
 #测试移动图像
-def move_test(img,points,col):
+def move_polygon(img,points,col):
     # moving_vec = (50*np.random.randn(1,2)).astype(int)
     moving_vec = np.array([randint(-15,15),randint(-15,15)])
     moving_vec = np.broadcast_to(moving_vec,points.shape)
