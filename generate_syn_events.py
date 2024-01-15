@@ -64,7 +64,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     func_names = [
-        "syn_polygon"
+        "syn_polygon",
+        "syn_multiple_polygons",
+        "syn_lines",
+        "syn_ellipses",
     ]
     for func_name in func_names:
         
@@ -77,7 +80,7 @@ if __name__ == "__main__":
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
-        func(img_root,points_root,100)
+        func(img_root,points_root,10)
 
         ##step1.1 加入fps文件
         fps_file = os.path.join(img_root,"fps.txt")

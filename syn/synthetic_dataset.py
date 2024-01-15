@@ -137,14 +137,16 @@ def keep_points_inside(points, size):
     return points[mask, :]
 
 
-def draw_lines(img, nb_lines=10):
+def draw_lines(img, nb_lines=5):
     """ Draw random lines and output the positions of the endpoints
     Parameters:
       nb_lines: maximal number of lines
     """
     num_lines = random_state.randint(1, nb_lines)
     segments = np.empty((0, 4), dtype=np.int)
-    points = np.empty((0, 2), dtype=np.int)
+    points = []
+    cols = []
+    thicknesses = []
     background_color = int(np.mean(img))
     min_dim = min(img.shape)
     for i in range(num_lines):
@@ -161,8 +163,10 @@ def draw_lines(img, nb_lines=10):
         col = get_random_color(background_color)
         thickness = random_state.randint(min_dim * 0.01, min_dim * 0.02)
         cv.line(img, (x1, y1), (x2, y2), col, thickness)
-        points = np.concatenate([points, np.array([[x1, y1], [x2, y2]])], axis=0)
-    return points
+        points.append(np.array([[x1, y1], [x2, y2]]))
+        cols.append(col)
+        thicknesses.append(thickness)
+    return points,cols,thicknesses
 
 
 def draw_polygon(img, max_sides=8):
@@ -226,7 +230,7 @@ def angle_between_vectors(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-def draw_multiple_polygons(img, max_sides=8, nb_polygons=30, **extra):
+def draw_multiple_polygons(img, max_sides=8, nb_polygons=3, **extra):
     """ Draw multiple polygons with a random number of corners
     and return the corner points
     Parameters:
@@ -236,8 +240,10 @@ def draw_multiple_polygons(img, max_sides=8, nb_polygons=30, **extra):
     segments = np.empty((0, 4), dtype=np.int)
     centers = []
     rads = []
-    points = np.empty((0, 2), dtype=np.int)
-    background_color = int(np.mean(img))
+    points = []
+    cols = []
+    background = img
+
     for i in range(nb_polygons):
         num_corners = random_state.randint(3, max_sides)
         min_dim = min(img.shape[0], img.shape[1])
@@ -252,7 +258,8 @@ def draw_multiple_polygons(img, max_sides=8, nb_polygons=30, **extra):
         new_points = [[int(x + max(random_state.rand(), 0.4) * rad * math.cos(a)),
                        int(y + max(random_state.rand(), 0.4) * rad * math.sin(a))]
                       for a in angles]
-        new_points = np.array(new_points)
+        new_points = np.asarray(new_points)
+        new_cols = get_random_color(int(np.mean(img)))
 
         # Filter the points that are too close or that have an angle too flat
         norms = [np.linalg.norm(new_points[(i-1) % num_corners, :]
@@ -293,14 +300,12 @@ def draw_multiple_polygons(img, max_sides=8, nb_polygons=30, **extra):
 
         # Color the polygon with a custom background
         corners = new_points.reshape((-1, 1, 2))
-        mask = np.zeros(img.shape, np.uint8)
-        custom_background = generate_custom_background(img.shape, background_color,
-                                                       **extra)
-        cv.fillPoly(mask, [corners], 255)
-        locs = np.where(mask != 0)
-        img[locs[0], locs[1]] = custom_background[locs[0], locs[1]]
-        points = np.concatenate([points, new_points], axis=0)
-    return points
+        cv.fillPoly(background, [corners], new_cols)
+
+        points.append(new_points)
+        cols.append(new_cols)
+
+    return points,cols
 
 
 def draw_ellipses(img, nb_ellipses=20):
@@ -312,6 +317,8 @@ def draw_ellipses(img, nb_ellipses=20):
     rads = np.empty((0, 1), dtype=np.int)
     min_dim = min(img.shape[0], img.shape[1]) / 4
     background_color = int(np.mean(img))
+    prams = []
+    cols = []
     for i in range(nb_ellipses):
         ax = int(max(random_state.rand() * min_dim, min_dim / 5))
         ay = int(max(random_state.rand() * min_dim, min_dim / 5))
@@ -330,7 +337,9 @@ def draw_ellipses(img, nb_ellipses=20):
         col = get_random_color(background_color)
         angle = random_state.rand() * 90
         cv.ellipse(img, (x, y), (ax, ay), angle, 0, 360, col, -1)
-    return np.empty((0, 2), dtype=np.int)
+        prams.append([x,y,ax,ay,angle])
+        cols.append(col)
+    return np.empty((0, 2), dtype=np.int),cols,prams
 
 
 def draw_star(img, nb_branches=6):
@@ -706,7 +715,27 @@ def move_polygon(img,points,col):
     cv.fillPoly(img, [corners], col)
     return points
 
-#加了color
+def move_line(img,point1,point2,col,thickness):
+    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+
+    point1 = point1+moving_vec
+    point2 = point2+moving_vec
+    cv.line(img, point1, point2, col,thickness)
+    return [point1,point2]
+
+def move_ellipses(img,col,pram):
+    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+
+    x = pram[0]+moving_vec[0] #x
+    y = pram[1]+moving_vec[1] #y
+    ax = pram[2] #ax
+    ay = pram[3] #ay
+    angle = pram[4]
+
+    cv.ellipse(img, (x, y), (ax, ay), angle, 0, 360, col, -1)
+    return np.empty((0, 2), dtype=np.int)
+
+#加了color,测试
 def draw_polygon_test(img, max_sides=8):
     """ Draw a polygon with a random number of corners
     and return the corner points
