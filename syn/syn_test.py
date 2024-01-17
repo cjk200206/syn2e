@@ -2,8 +2,8 @@
 import numpy as np
 import cv2
 import os
-# from . import synthetic_dataset
-import synthetic_dataset
+from . import synthetic_dataset
+# import synthetic_dataset
 
 
 img_save_path = "datasets/syn_test/img"
@@ -97,7 +97,89 @@ def syn_ellipses(img_save_path,points_save_path,num_of_pics=100):
             cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image)
             np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),new_points)
             
-    print("syn_lines finished!")
+    print("syn_ellipses finished!")
+
+def syn_star(img_save_path,points_save_path,num_of_pics=100):
+    os.makedirs(img_save_path,exist_ok=True)
+    os.makedirs(points_save_path,exist_ok=True) 
+
+    for iter in range(num_of_pics):
+        image_raw = synthetic_dataset.generate_background(size=(260,346))
+        # image_raw = synthetic_dataset.generate_pure_background()
+        image = image_raw.copy()
+        points_list,cols_list,thicknesses_list = synthetic_dataset.draw_star(image)
+        
+        os.makedirs(os.path.join(img_save_path,str(iter)),exist_ok=True)
+        os.makedirs(os.path.join(points_save_path,str(iter)),exist_ok=True)
+
+        for i in range(2): 
+            image = image_raw.copy()
+            new_points = synthetic_dataset.move_star(image,points_list,cols_list,thicknesses_list)
+            cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image)
+            np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),new_points)
+            
+    print("syn_star finished!")
+
+def syn_checkboard(img_save_path,points_save_path,num_of_pics=100):
+    os.makedirs(img_save_path,exist_ok=True)
+    os.makedirs(points_save_path,exist_ok=True) 
+
+    for iter in range(num_of_pics):
+        image_raw = synthetic_dataset.generate_background(size=(260,346))
+        # image_raw = synthetic_dataset.generate_pure_background()
+        image = [image_raw.copy(),image_raw.copy()]
+    
+        points_list = synthetic_dataset.draw_checkerboard_twice(image[0],image[1])
+        
+        os.makedirs(os.path.join(img_save_path,str(iter)),exist_ok=True)
+        os.makedirs(os.path.join(points_save_path,str(iter)),exist_ok=True)
+
+        for i in range(2): 
+            cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image[i])
+            np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),points_list[i])
+            
+    print("syn_checkboard finished!")    
+
+def syn_stripes(img_save_path,points_save_path,num_of_pics=100):
+    os.makedirs(img_save_path,exist_ok=True)
+    os.makedirs(points_save_path,exist_ok=True) 
+
+    for iter in range(num_of_pics):
+        image_raw = synthetic_dataset.generate_background(size=(260,346))
+        # image_raw = synthetic_dataset.generate_pure_background()
+        image = [image_raw.copy(),image_raw.copy()]
+    
+        points_list = synthetic_dataset.draw_stripes_twice(image[0],image[1])
+        
+        os.makedirs(os.path.join(img_save_path,str(iter)),exist_ok=True)
+        os.makedirs(os.path.join(points_save_path,str(iter)),exist_ok=True)
+
+        for i in range(2): 
+            cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image[i])
+            np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),points_list[i])
+            
+    print("syn_stripes finished!")
+
+def syn_cube(img_save_path,points_save_path,num_of_pics=100):
+    os.makedirs(img_save_path,exist_ok=True)
+    os.makedirs(points_save_path,exist_ok=True) 
+
+    for iter in range(num_of_pics):
+        image_raw = synthetic_dataset.generate_background(size=(260,346))
+        # image_raw = synthetic_dataset.generate_pure_background()
+        image = [image_raw.copy(),image_raw.copy()]
+    
+        points_list = synthetic_dataset.draw_cube_twice(image[0],image[1])
+        
+        os.makedirs(os.path.join(img_save_path,str(iter)),exist_ok=True)
+        os.makedirs(os.path.join(points_save_path,str(iter)),exist_ok=True)
+
+        for i in range(2): 
+            cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image[i])
+            np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),points_list[i])
+            
+    print("syn_cube finished!")          
 
 if __name__ == "__main__":
-    syn_ellipses(img_save_path,points_save_path,3)
+    syn_cube(img_save_path,points_save_path,3)
+

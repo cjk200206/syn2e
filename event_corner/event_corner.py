@@ -14,23 +14,25 @@ def frame_corner_tube(frame_corner_dir):
         with open(os.path.join(frame_corner_dir,file)) as f:
             frame_corner.append(np.loadtxt(f))
     frame_corner = np.asarray(frame_corner)
+    
+    frame_corner_time = [] #帧的时间
+    tubes = [] #时空管道
 
     #加时间轴，极性轴，角点判断轴
-    frame_corner_time = []
     for iter in range(len(frame_corner)):
-        temp=np.insert(frame_corner[iter],2,values=0+0.04*10e8*iter,axis=1) #时间轴
-        # 下面两个好像用不上
-        # temp1=np.insert(temp,3,values=0,axis=1) #极性轴
-        # temp2=np.insert(temp1,4,values=0,axis=1) #角点判断轴
-        frame_corner_time.append(temp)
+        if frame_corner.size != 0: 
+            temp=np.insert(frame_corner[iter],2,values=0+0.04*10e8*iter,axis=1) #时间轴
+            # 下面两个好像用不上
+            # temp1=np.insert(temp,3,values=0,axis=1) #极性轴
+            # temp2=np.insert(temp1,4,values=0,axis=1) #角点判断轴
+            frame_corner_time.append(temp)
     frame_corner_time = np.asarray(frame_corner_time)
 
     #构建时空管道，判断事件角点数据
-    tubes = []
-    for iter in range(len(frame_corner[0])):
-        tube = draw_tube(frame_corner_time[0][iter],frame_corner_time[1][iter])
-        tubes.append(tube)
-
+    if len(frame_corner_time)!= 0: 
+        for iter in range(len(frame_corner[0])):
+            tube = draw_tube(frame_corner_time[0][iter],frame_corner_time[1][iter])
+            tubes.append(tube)
     return tubes    
 
 #读取事件流并判断
@@ -41,22 +43,23 @@ def judge_event_corner(tubes,event_file_dir):
     tube_counter = 0
     break_counter = 0
 
-    #标记事件角点并储存
-    for file in event_files:
-        event_file = os.path.join(event_file_dir,file)
+    if len(tubes) != 0:
+        #标记事件角点并储存
+        for file in event_files:
+            event_file = os.path.join(event_file_dir,file)
 
-        with open(event_file) as f:
-            events = np.loadtxt(f).astype(np.int32)
-        #标记事件流
-            np.zeros(len(events))
-        for iter in range(len(events)):
-            if not judge_time(tubes[0],events[iter]): #如果不符合时间区间，直接跳过
-                break_counter += 1
-                break
-            for tube in tubes:
-                if judge_corner(tube,events[iter]):
-                    event_corners.append(events[iter])
-                    counter += 1
+            with open(event_file) as f:
+                events = np.loadtxt(f).astype(np.int32)
+            #标记事件流
+                np.zeros(len(events))
+            for iter in range(len(events)):
+                if not judge_time(tubes[0],events[iter]): #如果不符合时间区间，直接跳过
+                    break_counter += 1
+                    break
+                for tube in tubes:
+                    if judge_corner(tube,events[iter]):
+                        event_corners.append(events[iter])
+                        counter += 1
 
     event_corners = np.asarray(event_corners)
 
