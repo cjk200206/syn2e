@@ -11,13 +11,15 @@ points_save_path = "datasets/syn_test/points"
 corner_img_save_path = "datasets/syn_test/corner_img"
 
 
-def syn_polygon(img_save_path,points_save_path,corner_img_save_path,num_of_pics=100):
+def syn_polygon(img_save_path,points_save_path,corner_img_save_path,num_of_pics=100,img_size = [260,346]):
     os.makedirs(img_save_path,exist_ok=True)
     os.makedirs(points_save_path,exist_ok=True) 
     os.makedirs(corner_img_save_path,exist_ok=True) 
+    y = img_size[0]
+    x = img_size[1]
 
     for iter in range(num_of_pics):
-        image_raw = synthetic_dataset.generate_background(size=(260,346))
+        image_raw = synthetic_dataset.generate_background(size=(y,x))
         # image_raw = synthetic_dataset.generate_pure_background()
         image = image_raw.copy()
         points,col = synthetic_dataset.draw_polygon(image)
@@ -27,11 +29,12 @@ def syn_polygon(img_save_path,points_save_path,corner_img_save_path,num_of_pics=
 
         for i in range(2): 
             image = image_raw.copy()
-            corner_img = np.zeros([260,346]) #创建空白的帧角点图
+            corner_img = np.zeros([y,x]) #创建空白的帧角点图
             points = synthetic_dataset.move_polygon(image,points,col)
 
             for point in points:
-                corner_img[point[0],point[1]] = 255 #标记帧角点
+                if point[0] >= 0 and point[1] <= x and point[1] >= 0 and point[1] <= y: 
+                    corner_img[point[0],point[1]] = 255 #标记帧角点
 
             cv2.imwrite(os.path.join(corner_img_save_path,str(iter),"{}.png".format(i)),corner_img) #画出帧角点图
             cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image)
