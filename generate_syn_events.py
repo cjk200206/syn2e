@@ -89,7 +89,7 @@ if __name__ == "__main__":
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
-        func(img_root,points_root,corner_img_root,1)
+        func(img_root,points_root,corner_img_root,100)
 
         ##step1.1 加入fps文件
         fps_file = os.path.join(img_root,"fps.txt")
