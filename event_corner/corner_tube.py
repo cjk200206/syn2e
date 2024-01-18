@@ -16,7 +16,7 @@ def draw_tube(corner1,corner2):
 
     return tube
 
-def judge_corner(tube,event,circle_size=5): #circle_size为管道半径
+def judge_corner(tube,event,circle_size=10): #circle_size为管道半径
     t = event[2]
     t0 = tube[0][2]
     t1 = tube[1][2]

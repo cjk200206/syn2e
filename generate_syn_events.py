@@ -79,20 +79,30 @@ if __name__ == "__main__":
         img_root = "datasets/{}/img".format(func_name)
         points_root = "datasets/{}/points".format(func_name)   
         upsample_root = "datasets/{}/upsampled".format(func_name)
+        corner_img_root = "datasets/{}/corner_img".format(func_name)
+        corner_img_upsample_root = "datasets/{}/corner_img_upsampled".format(func_name)
         events_root = "datasets/{}/events".format(func_name)
-        event_corner_root = "datasets/{}/event_corners".format(func_name)
+        # event_corner_root = "datasets/{}/event_corners".format(func_name)
+        event_corner_root_new = "datasets/{}/event_corners_new".format(func_name)
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
-        func(img_root,points_root,1)
+        func(img_root,points_root,corner_img_root,1)
 
         ##step1.1 加入fps文件
         fps_file = os.path.join(img_root,"fps.txt")
         with open(fps_file,"w+") as f: 
             f.write('25') #帧率
 
+        fps_file_1 = os.path.join(corner_img_root,"fps.txt")
+        with open(fps_file_1,"w+") as f: 
+            f.write('25') #角点帧率
+
         ##step2 生成上采样
         upsampler = Upsampler(input_dir=img_root, output_dir=upsample_root)
+        upsampler.upsample_new()
+        ##step2.1 生成角点上采样
+        upsampler = Upsampler(input_dir=corner_img_root, output_dir=corner_img_upsample_root)
         upsampler.upsample_new()
 
         ##step3 生成事件
@@ -100,22 +110,29 @@ if __name__ == "__main__":
 
         for path, subdirs, files in os.walk(upsample_root):
             if is_valid_dir(subdirs, files):
-                output_folder = os.path.join(events_root, os.path.relpath(path,upsample_root))
+                rel_path = os.path.relpath(path,upsample_root)
+                frame_corner_upsample_path =  os.path.join(corner_img_upsample_root,rel_path) 
 
-                process_dir(output_folder, path, args)
+                events_output_folder = os.path.join(events_root, rel_path)
+                event_corner_output_folder = os.path.join(event_corner_root_new, rel_path)
 
-        ##step4 检测事件角点
-        for dirpath,subdirs,filenames in os.walk(points_root):
-            if len(subdirs) == 0 and len(filenames) != 0: #判断文件夹，当只含txt文件时，即最里侧文件夹
-                frame_corner_dir = dirpath
-                events_dir = os.path.join(events_root,os.path.relpath(dirpath,points_root))
-                event_corner_dir = os.path.join(event_corner_root,os.path.relpath(dirpath,points_root))
+                process_dir(events_output_folder, path, args)
+                process_dir(event_corner_output_folder, frame_corner_upsample_path, args) #将角点上采样转换成事件
 
-                print(str(event_corner_dir)+' processing...') 
-                tubes = frame_corner_tube(frame_corner_dir)
-                event_corners = judge_event_corner(tubes,events_dir)
-                save_corners(event_corners,event_corner_dir)
-                print(str(event_corner_dir)+' finished!') 
+        # ##step4 检测事件角点_old
+        # for dirpath,subdirs,filenames in os.walk(points_root):
+        #     if len(subdirs) == 0 and len(filenames) != 0: #判断文件夹，当只含txt文件时，即最里侧文件夹
+        #         frame_corner_dir = dirpath
+        #         events_dir = os.path.join(events_root,os.path.relpath(dirpath,points_root))
+        #         event_corner_dir = os.path.join(event_corner_root,os.path.relpath(dirpath,points_root))
+
+        #         print(str(event_corner_dir)+' processing...') 
+        #         tubes = frame_corner_tube(frame_corner_dir)
+        #         event_corners = judge_event_corner(tubes,events_dir)
+        #         save_corners(event_corners,event_corner_dir)
+        #         print(str(event_corner_dir)+' finished!') 
+        
+     
         
 
 

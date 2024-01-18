@@ -8,11 +8,13 @@ from . import synthetic_dataset
 
 img_save_path = "datasets/syn_test/img"
 points_save_path = "datasets/syn_test/points"
+corner_img_save_path = "datasets/syn_test/corner_img"
 
 
-def syn_polygon(img_save_path,points_save_path,num_of_pics=100):
+def syn_polygon(img_save_path,points_save_path,corner_img_save_path,num_of_pics=100):
     os.makedirs(img_save_path,exist_ok=True)
     os.makedirs(points_save_path,exist_ok=True) 
+    os.makedirs(corner_img_save_path,exist_ok=True) 
 
     for iter in range(num_of_pics):
         image_raw = synthetic_dataset.generate_background(size=(260,346))
@@ -21,10 +23,17 @@ def syn_polygon(img_save_path,points_save_path,num_of_pics=100):
         points,col = synthetic_dataset.draw_polygon(image)
         os.makedirs(os.path.join(img_save_path,str(iter)),exist_ok=True)
         os.makedirs(os.path.join(points_save_path,str(iter)),exist_ok=True)
+        os.makedirs(os.path.join(corner_img_save_path,str(iter)),exist_ok=True)
 
         for i in range(2): 
             image = image_raw.copy()
+            corner_img = np.zeros([260,346]) #创建空白的帧角点图
             points = synthetic_dataset.move_polygon(image,points,col)
+
+            for point in points:
+                corner_img[point[0],point[1]] = 255 #标记帧角点
+
+            cv2.imwrite(os.path.join(corner_img_save_path,str(iter),"{}.png".format(i)),corner_img) #画出帧角点图
             cv2.imwrite(os.path.join(img_save_path,str(iter),"{}.png".format(i)),image)
             np.savetxt(os.path.join(points_save_path,str(iter),"{}.txt".format(i)),points)
             
@@ -180,6 +189,17 @@ def syn_cube(img_save_path,points_save_path,num_of_pics=100):
             
     print("syn_cube finished!")          
 
+# def corner_img(corners_root,corner_img_save_root):
+#     for path,dirs,files in os.walk(corners_root):
+#         if len(dirs) == 0 and len(files) != 0:
+#             np.loadtxt(files)
+
+#             corner_dir = path
+#             corner_img_dir = os.path.join(corner_img_save_root,os.path.relpath(corner_dir,corners_root))
+#             os.makedirs(corner_img_dir)
+#             cv2.imwrite(os.path.join(corner_img_dir,"{}.png".format()),points)
+
+
 if __name__ == "__main__":
-    syn_cube(img_save_path,points_save_path,3)
+    syn_polygon(img_save_path,points_save_path,corner_img_save_path,3)
 
