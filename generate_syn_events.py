@@ -63,15 +63,17 @@ if __name__ == "__main__":
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
     args = parser.parse_args()
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0" #模型只支持单卡
+
     func_names = [
         "syn_polygon",
-        # "syn_multiple_polygons",
-        # "syn_lines",
-        # "syn_ellipses",
-        # "syn_star",
-        # "syn_checkboard",
-        # "syn_stripes",
-        # "syn_cube",
+        "syn_multiple_polygons",
+        "syn_lines",
+        "syn_ellipses",
+        "syn_star",
+        "syn_checkboard",
+        "syn_stripes",
+        "syn_cube",
     ]
     for func_name in func_names:
         
