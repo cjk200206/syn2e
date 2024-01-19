@@ -61,12 +61,13 @@ if __name__ == "__main__":
     parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.1)
     parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.1)
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
+    parser.add_argument("--image_number", "-num", type=int, default=100)
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0" #模型只支持单卡
 
     func_names = [
-        # "syn_polygon",
+        "syn_polygon",
         "syn_multiple_polygons",
         "syn_lines",
         "syn_ellipses",
@@ -89,7 +90,7 @@ if __name__ == "__main__":
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
-        func(img_root,points_root,corner_img_root,100)
+        func(img_root,points_root,corner_img_root,args.image_number)
 
         ##step1.1 加入fps文件
         fps_file = os.path.join(img_root,"fps.txt")
