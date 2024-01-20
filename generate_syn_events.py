@@ -62,6 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.1)
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
     parser.add_argument("--image_number", "-num", type=int, default=100)
+    parser.add_argument("--data_segmentation","-data",type=str,default="train")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0" #模型只支持单卡
@@ -79,14 +80,14 @@ if __name__ == "__main__":
     for func_name in func_names:
         
         ##step0 生成文件路径
-        img_root = "datasets/{}/img".format(func_name)
-        points_root = "datasets/{}/points".format(func_name)   
-        upsample_root = "datasets/{}/upsampled".format(func_name)
-        corner_img_root = "datasets/{}/corner_img".format(func_name)
-        corner_img_upsample_root = "datasets/{}/corner_img_upsampled".format(func_name)
-        events_root = "datasets/{}/events".format(func_name)
-        # event_corner_root = "datasets/{}/event_corners".format(func_name)
-        event_corner_root_new = "datasets/{}/event_corners_new".format(func_name)
+        img_root = "datasets/{}/{}/img".format(args.data_segmentation,func_name)
+        points_root = "datasets/{}/{}/points".format(args.data_segmentation,func_name)   
+        upsample_root = "datasets/{}/{}/upsampled".format(args.data_segmentation,func_name)
+        corner_img_root = "datasets/{}/{}/corner_img".format(args.data_segmentation,func_name)
+        corner_img_upsample_root = "datasets/{}/{}/corner_img_upsampled".format(args.data_segmentation,func_name)
+        events_root = "datasets/{}/{}/events".format(args.data_segmentation,func_name)
+        # event_corner_root = "datasets/{}/{}/event_corners".format(args.data_segmentation,func_name)
+        event_corner_root_new = "datasets/{}/{}/event_corners_new".format(args.data_segmentation,func_name)
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
