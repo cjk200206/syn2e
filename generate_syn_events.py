@@ -86,8 +86,8 @@ if __name__ == "__main__":
         corner_img_root = "datasets/{}/{}/corner_img".format(args.data_segmentation,func_name)
         corner_img_upsample_root = "datasets/{}/{}/corner_img_upsampled".format(args.data_segmentation,func_name)
         events_root = "datasets/{}/{}/events".format(args.data_segmentation,func_name)
-        # event_corner_root = "datasets/{}/{}/event_corners".format(args.data_segmentation,func_name)
-        event_corner_root_new = "datasets/{}/{}/event_corners_new".format(args.data_segmentation,func_name)
+        # event_corner_root_old = "datasets/{}/{}/event_corners_old".format(args.data_segmentation,func_name)
+        event_corner_root = "datasets/{}/{}/event_corners".format(args.data_segmentation,func_name)
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
@@ -118,17 +118,46 @@ if __name__ == "__main__":
                 frame_corner_upsample_path =  os.path.join(corner_img_upsample_root,rel_path) 
 
                 events_output_folder = os.path.join(events_root, rel_path)
-                event_corner_output_folder = os.path.join(event_corner_root_new, rel_path)
+                event_corner_output_folder = os.path.join(event_corner_root, rel_path)
 
                 process_dir(events_output_folder, path, args)
                 process_dir(event_corner_output_folder, frame_corner_upsample_path, args) #将角点上采样转换成事件
+
+        ##step3.1 将角点事件融入原事件文件
+        for path, subdirs, files in os.walk(events_root):
+            if len(subdirs) == 0 and len(files) != 0:
+                rel_path = os.path.relpath(path,events_root)
+
+                events_files = sorted(os.listdir(os.path.join(events_root, rel_path)))
+                event_corner_files = sorted(os.listdir(os.path.join(event_corner_root, rel_path)))
+                
+
+                for events_file_path,event_corner_file_path in zip(events_files,event_corner_files) :
+                    event_corner_file_path = os.path.join(event_corner_root, rel_path, event_corner_file_path)
+                    events_file_path = os.path.join(events_root, rel_path, events_file_path)
+                    
+                    event_corner = np.loadtxt(event_corner_file_path,dtype = int) 
+                    events = np.loadtxt(events_file_path)
+
+                    merged_events  = np.append(events,event_corner,axis=0)
+                    timestamps = merged_events[:,2]
+                    index = np.argsort(timestamps) #给合起来的事件排序
+                    sorted_events = merged_events[index,:]
+                    np.savetxt(events_file_path,sorted_events,fmt="%d")
+                print(str(path)+" is merged and sorted!")
+                        
+
+
+                
+
+   
 
         # ##step4 检测事件角点_old
         # for dirpath,subdirs,filenames in os.walk(points_root):
         #     if len(subdirs) == 0 and len(filenames) != 0: #判断文件夹，当只含txt文件时，即最里侧文件夹
         #         frame_corner_dir = dirpath
         #         events_dir = os.path.join(events_root,os.path.relpath(dirpath,points_root))
-        #         event_corner_dir = os.path.join(event_corner_root,os.path.relpath(dirpath,points_root))
+        #         event_corner_dir = os.path.join(event_corner_root_old,os.path.relpath(dirpath,points_root))
 
         #         print(str(event_corner_dir)+' processing...') 
         #         tubes = frame_corner_tube(frame_corner_dir)
