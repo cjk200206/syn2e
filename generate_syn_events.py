@@ -64,8 +64,12 @@ if __name__ == "__main__":
     parser.add_argument("--image_number", "-num", type=int, default=100)
     parser.add_argument("--data_segmentation","-data",type=str,default="train")
     args = parser.parse_args()
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0" #模型只支持单卡
+    #复制一份给角点,调整阈值
+    args1 = parser.parse_args()
+    args1.contrast_threshold_negative = 0.5
+    args1.contrast_threshold_positive = 0.5
+    #模型只支持单卡
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     func_names = [
         "syn_polygon",
@@ -88,6 +92,8 @@ if __name__ == "__main__":
         events_root = "datasets/{}/{}/events".format(args.data_segmentation,func_name)
         # event_corner_root_old = "datasets/{}/{}/event_corners_old".format(args.data_segmentation,func_name)
         event_corner_root = "datasets/{}/{}/event_corners".format(args.data_segmentation,func_name)
+        augmented_events_root = "datasets/{}/{}/augmented_events".format(args.data_segmentation,func_name)
+        
         
         ##step1 生成帧图像
         func = getattr(syn,func_name)
@@ -121,29 +127,40 @@ if __name__ == "__main__":
                 event_corner_output_folder = os.path.join(event_corner_root, rel_path)
 
                 process_dir(events_output_folder, path, args)
-                process_dir(event_corner_output_folder, frame_corner_upsample_path, args) #将角点上采样转换成事件
+                process_dir(event_corner_output_folder, frame_corner_upsample_path, args1) #将角点上采样转换成事件
 
-        ##step3.1 将角点事件融入原事件文件
+        ##step3.1 将角点事件融合原事件文件
         for path, subdirs, files in os.walk(events_root):
             if len(subdirs) == 0 and len(files) != 0:
                 rel_path = os.path.relpath(path,events_root)
 
+                #把标了角点的事件存档到另外的目录下
+                augmented_events_path = os.path.join(augmented_events_root,rel_path)
+                os.makedirs(augmented_events_path,exist_ok=True)
+                #读取/xx/.../xx/0 下的所有文件
                 events_files = sorted(os.listdir(os.path.join(events_root, rel_path)))
                 event_corner_files = sorted(os.listdir(os.path.join(event_corner_root, rel_path)))
-                
 
                 for events_file_path,event_corner_file_path in zip(events_files,event_corner_files) :
+                    augmented_events_file_path = os.path.join(augmented_events_root, rel_path, events_file_path) #新的标记后的事件文件
                     event_corner_file_path = os.path.join(event_corner_root, rel_path, event_corner_file_path)
                     events_file_path = os.path.join(events_root, rel_path, events_file_path)
                     
+
+                    #读取事件角点和事件
                     event_corner = np.loadtxt(event_corner_file_path,dtype = int) 
                     events = np.loadtxt(events_file_path)
+                    
+                    #将事件角点1和事件0分别加标签
+                    augmented_event_corner = np.append(event_corner,np.ones((len(event_corner),1)),axis=1)
+                    augmented_events = np.append(events,np.zeros((len(events),1)),axis=1)
 
-                    merged_events  = np.append(events,event_corner,axis=0)
+                    #两者合并，写入新文件
+                    merged_events  = np.append(augmented_events,augmented_event_corner,axis=0)
                     timestamps = merged_events[:,2]
                     index = np.argsort(timestamps) #给合起来的事件排序
                     sorted_events = merged_events[index,:]
-                    np.savetxt(events_file_path,sorted_events,fmt="%d")
+                    np.savetxt(augmented_events_file_path,sorted_events,fmt="%d")
                 print(str(path)+" is merged and sorted!")
                         
 
