@@ -66,8 +66,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     #复制一份给角点,调整阈值
     args1 = parser.parse_args()
-    args1.contrast_threshold_negative = 0.5
-    args1.contrast_threshold_positive = 0.5
+    args1.contrast_threshold_negative = 0.1
+    args1.contrast_threshold_positive = 0.1
     #模型只支持单卡
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
