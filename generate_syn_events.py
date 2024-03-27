@@ -73,13 +73,13 @@ if __name__ == "__main__":
 
     func_names = [
         "syn_polygon",
-        "syn_multiple_polygons",
-        "syn_lines",
-        "syn_ellipses",
-        "syn_star",
-        "syn_checkboard",
-        "syn_stripes",
-        "syn_cube",
+        # "syn_multiple_polygons",
+        # "syn_lines",
+        # "syn_ellipses",
+        # "syn_star",
+        # "syn_checkboard",
+        # "syn_stripes",
+        # "syn_cube",
     ]
     for func_name in func_names:
         
@@ -95,39 +95,39 @@ if __name__ == "__main__":
         augmented_events_root = "datasets/{}/{}/augmented_events".format(args.data_segmentation,func_name)
         
         
-        ##step1 生成帧图像
-        func = getattr(syn,func_name)
-        func(img_root,points_root,corner_img_root,args.image_number)
+        # ##step1 生成帧图像
+        # func = getattr(syn,func_name)
+        # func(img_root,points_root,corner_img_root,args.image_number)
 
-        ##step1.1 加入fps文件
-        fps_file = os.path.join(img_root,"fps.txt")
-        with open(fps_file,"w+") as f: 
-            f.write('25') #帧率
+        # ##step1.1 加入fps文件
+        # fps_file = os.path.join(img_root,"fps.txt")
+        # with open(fps_file,"w+") as f: 
+        #     f.write('25') #帧率
 
-        fps_file_1 = os.path.join(corner_img_root,"fps.txt")
-        with open(fps_file_1,"w+") as f: 
-            f.write('25') #角点帧率
+        # fps_file_1 = os.path.join(corner_img_root,"fps.txt")
+        # with open(fps_file_1,"w+") as f: 
+        #     f.write('25') #角点帧率
 
-        ##step2 生成上采样
-        upsampler = Upsampler(input_dir=img_root, output_dir=upsample_root)
-        upsampler.upsample_new()
-        ##step2.1 生成角点上采样
-        upsampler = Upsampler(input_dir=corner_img_root, output_dir=corner_img_upsample_root)
-        upsampler.upsample_new()
+        # ##step2 生成上采样
+        # upsampler = Upsampler(input_dir=img_root, output_dir=upsample_root)
+        # upsampler.upsample_new()
+        # ##step2.1 生成角点上采样
+        # upsampler = Upsampler(input_dir=corner_img_root, output_dir=corner_img_upsample_root)
+        # upsampler.upsample_new()
 
-        ##step3 生成事件
-        print(f"Generating events with cn={args.contrast_threshold_negative}, cp={args.contrast_threshold_positive} and rp={args.refractory_period_ns}")
+        # ##step3 生成事件
+        # print(f"Generating events with cn={args.contrast_threshold_negative}, cp={args.contrast_threshold_positive} and rp={args.refractory_period_ns}")
 
-        for path, subdirs, files in os.walk(upsample_root):
-            if is_valid_dir(subdirs, files):
-                rel_path = os.path.relpath(path,upsample_root)
-                frame_corner_upsample_path =  os.path.join(corner_img_upsample_root,rel_path) 
+        # for path, subdirs, files in os.walk(upsample_root):
+        #     if is_valid_dir(subdirs, files):
+        #         rel_path = os.path.relpath(path,upsample_root)
+        #         frame_corner_upsample_path =  os.path.join(corner_img_upsample_root,rel_path) 
 
-                events_output_folder = os.path.join(events_root, rel_path)
-                event_corner_output_folder = os.path.join(event_corner_root, rel_path)
+        #         events_output_folder = os.path.join(events_root, rel_path)
+        #         event_corner_output_folder = os.path.join(event_corner_root, rel_path)
 
-                process_dir(events_output_folder, path, args)
-                process_dir(event_corner_output_folder, frame_corner_upsample_path, args1) #将角点上采样转换成事件
+        #         process_dir(events_output_folder, path, args)
+        #         process_dir(event_corner_output_folder, frame_corner_upsample_path, args1) #将角点上采样转换成事件
 
         ##step3.1 将角点事件融合原事件文件
         for path, subdirs, files in os.walk(events_root):
@@ -150,6 +150,12 @@ if __name__ == "__main__":
                     #读取事件角点和事件
                     event_corner = np.loadtxt(event_corner_file_path,dtype = int) 
                     events = np.loadtxt(events_file_path)
+
+                    #判断维度
+                    if event_corner.ndim == 1:
+                        event_corner = np.expand_dims(event_corner,axis=0)
+                    if events.ndim == 1:
+                        events = np.expand_dims(events,axis=0)
                     
                     #将事件角点1和事件0分别加标签
                     augmented_event_corner = np.append(event_corner,np.ones((len(event_corner),1)),axis=1)
