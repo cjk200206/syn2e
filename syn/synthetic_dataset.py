@@ -702,7 +702,11 @@ def draw_interest_points(img, points):
 #移动图像
 def move_polygon(img,points,col):
     # moving_vec = (50*np.random.randn(1,2)).astype(int)
-    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+    segment1 = np.arange(-40, -20)  # (-40, -20) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.array(random_number)
     moving_vec = np.broadcast_to(moving_vec,points.shape)
 
     points = points+moving_vec
@@ -711,7 +715,11 @@ def move_polygon(img,points,col):
     return points
 
 def move_line(img,point1,point2,col,thickness):
-    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.array(random_number)
 
     point1 = point1+moving_vec
     point2 = point2+moving_vec
@@ -719,7 +727,12 @@ def move_line(img,point1,point2,col,thickness):
     return [point1,point2]
 
 def move_star(img,point_list,col_list,thickness_list):
-    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.array(random_number)
+
     new_point_list = []
     center = point_list[0]+moving_vec
     new_point_list.append(center)
@@ -731,7 +744,11 @@ def move_star(img,point_list,col_list,thickness_list):
     return new_point_list
 
 def move_ellipses(img,col,pram):
-    moving_vec = np.array([randint(-15,15),randint(-15,15)])
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.array(random_number)
 
     x = pram[0]+moving_vec[0] #x
     y = pram[1]+moving_vec[1] #y
@@ -803,7 +820,11 @@ def draw_checkerboard_twice(img,img1, max_rows=7, max_cols=7, transform_params=(
     warped_points = np.concatenate([warped_col0[:, None], warped_col1[:, None]], axis=1)
     warped_points = warped_points.astype(int)
     #加入移动矩阵
-    moving_vec = np.broadcast_to(np.array([randint(-15,15),randint(-15,15)]),warped_points.shape)
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.broadcast_to(np.array(random_number),warped_points.shape)
     warped_points1 = warped_points+moving_vec
 
 
@@ -966,7 +987,11 @@ def draw_stripes_twice(img,img1, max_nb_cols=13, min_width_ratio=0.04,
     warped_points = np.concatenate([warped_col0[:, None], warped_col1[:, None]], axis=1)
     warped_points = warped_points.astype(int)
     #加入移动矩阵
-    moving_vec = np.broadcast_to(np.array([randint(-15,15),randint(-15,15)]),warped_points.shape)
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.broadcast_to(np.array(random_number),warped_points.shape)
     warped_points1 = warped_points+moving_vec
 
     # Fill the rectangles
@@ -1096,7 +1121,11 @@ def draw_cube_twice(img,img1, min_size_ratio=0.2, min_angle_rot=math.pi / 10,
     cube = cube.astype(int)
     points = cube[1:, :]  # get rid of the hidden corner
     #加入移动矩阵
-    moving_vec = np.broadcast_to(np.array([randint(-15,15),randint(-15,15)]),cube.shape)
+    segment1 = np.arange(-40, -20)  # (-20, -10) 区间内的整数
+    segment2 = np.arange(20, 40)  
+    choices = np.concatenate((segment1, segment2))
+    random_number = [np.random.choice(choices),np.random.choice(choices)]
+    moving_vec = np.broadcast_to(np.array(random_number),cube.shape)
     cube1 = cube+moving_vec
     points1 = cube1[1:,:]
 
