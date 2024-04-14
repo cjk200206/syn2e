@@ -58,28 +58,28 @@ def process_dir(outdir, indir, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("""Generate events from a high frequency video stream""")
-    parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.05)
-    parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.05)
+    parser.add_argument("--contrast_threshold_negative", "-cn", type=float, default=0.2)
+    parser.add_argument("--contrast_threshold_positive", "-cp", type=float, default=0.2)
     parser.add_argument("--refractory_period_ns", "-rp", type=int, default=0)
     parser.add_argument("--image_number", "-num", type=int, default=100)
     parser.add_argument("--data_segmentation","-data",type=str,default="train")
     args = parser.parse_args()
     #复制一份给角点,调整阈值
     args1 = parser.parse_args()
-    args1.contrast_threshold_negative = 0.05
-    args1.contrast_threshold_positive = 0.05
+    args1.contrast_threshold_negative = 0.95
+    args1.contrast_threshold_positive = 0.95
     #模型只支持单卡
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     func_names = [
         "syn_polygon",
         "syn_multiple_polygons",
-        "syn_lines",
-        "syn_ellipses",
+        # "syn_lines",
+        # "syn_ellipses",
         "syn_star",
         "syn_checkboard",
-        "syn_stripes",
-        "syn_cube",
+        # "syn_stripes",
+        # "syn_cube",
     ]
     for func_name in func_names:
         
@@ -140,33 +140,83 @@ if __name__ == "__main__":
                 #读取/xx/.../xx/0 下的所有文件
                 events_files = sorted(os.listdir(os.path.join(events_root, rel_path)))
                 event_corner_files = sorted(os.listdir(os.path.join(event_corner_root, rel_path)))
+                timestamps_file = os.path.join(upsample_root, rel_path,'timestamps.txt') #事件分割时间戳
+                #新的标记后的事件文件
+                augmented_events_file_path = os.path.join(augmented_events_path, '0.txt')
+                
+                #建立大集合
+                event_corner_bin = []
+                events_bin = []
 
-                for events_file_path,event_corner_file_path in zip(events_files,event_corner_files) :
-                    augmented_events_file_path = os.path.join(augmented_events_root, rel_path, events_file_path) #新的标记后的事件文件
-                    event_corner_file_path = os.path.join(event_corner_root, rel_path, event_corner_file_path)
+                for events_file_path in events_files :
+                    # augmented_events_file_path = os.path.join(augmented_events_root, rel_path, events_file_path) #新的标记后的事件文件
                     events_file_path = os.path.join(events_root, rel_path, events_file_path)
-                    
-
-                    #读取事件角点和事件
-                    event_corner = np.loadtxt(event_corner_file_path,dtype = int) 
+                    #读取事件
                     events = np.loadtxt(events_file_path)
-
                     #判断维度
-                    if event_corner.ndim == 1:
-                        event_corner = np.expand_dims(event_corner,axis=0)
                     if events.ndim == 1:
                         events = np.expand_dims(events,axis=0)
-                    
-                    #将事件角点1和事件0分别加标签
-                    augmented_event_corner = np.append(event_corner,np.ones((len(event_corner),1)),axis=1)
+                    #将事件0加标签
                     augmented_events = np.append(events,np.zeros((len(events),1)),axis=1)
+                    #加入大集合
+                    events_bin.append(augmented_events)
+                
+                for event_corner_file_path in event_corner_files :
+                    # augmented_events_file_path = os.path.join(augmented_events_root, rel_path, events_file_path) #新的标记后的事件文件
+                    event_corner_file_path = os.path.join(event_corner_root, rel_path, event_corner_file_path)
+                    #读取事件角点
+                    event_corner = np.loadtxt(event_corner_file_path,dtype = int) 
+                    #判断维度
+                    if event_corner.ndim == 1:
+                        event_corner = np.expand_dims(event_corner,axis=0) 
+                    #将事件角点1加标签
+                    augmented_event_corner = np.append(event_corner,np.ones((len(event_corner),1)),axis=1)                   
+                    #加入大集合
+                    event_corner_bin.append(augmented_event_corner)
 
-                    #两者合并，写入新文件
-                    merged_events  = np.append(augmented_events,augmented_event_corner,axis=0)
-                    timestamps = merged_events[:,2]
-                    index = np.argsort(timestamps) #给合起来的事件排序
-                    sorted_events = merged_events[index,:]
-                    np.savetxt(augmented_events_file_path,sorted_events,fmt="%d")
+                event_corner_bin = np.concatenate(event_corner_bin,axis=0)
+                events_bin = np.concatenate(events_bin,axis=0)
+
+                #抽取一定比例的角点
+                length = len(event_corner_bin)
+                sample_size = int(length*0.05)
+                indices = np.random.choice(length, sample_size, replace=False)
+                event_corner_bin = event_corner_bin[indices]
+
+                #两者合并，写入新文件
+                merged_events  = np.append(event_corner_bin,events_bin,axis=0)
+                timestamps = merged_events[:,2]
+                index = np.argsort(timestamps) #给合起来的事件排序
+                sorted_events = merged_events[index,:]
+
+                #设定时间范围
+                timestamps_from_file = np.genfromtxt(timestamps_file, dtype="float64")
+                timestamps_ns = (timestamps_from_file * 1e9).astype("int64")
+
+                temp_bin = []
+                for events_file_path,iter in zip(events_files,range(len(events_files))) :
+                    augmented_events_file_path = os.path.join(augmented_events_root, rel_path, events_file_path) #新的标记后的事件文件
+                    events_file_path = os.path.join(events_root, rel_path, events_file_path)
+                    #设置mask
+                    mask = (sorted_events[:,2]>timestamps_ns[iter]) & (sorted_events[:,2]<timestamps_ns[iter+1])
+                    # #判断维度
+                    # if events.ndim == 1:
+                    #     events = np.expand_dims(events,axis=0)
+                    # #将事件0加标签
+                    # augmented_events = np.append(events,np.zeros((len(events),1)),axis=1)
+                    # #加入大集合
+                    # events_bin.append(augmented_events)
+
+                    temp_bin.append(sorted_events[mask])
+                    #存储,每x组一次
+                    if (iter+1)%4==0:
+                        temp_bin = np.concatenate(temp_bin,axis=0)
+                        np.savetxt(augmented_events_file_path,temp_bin,fmt="%d")
+                        temp_bin = []
+                #存储
+                # np.savetxt(augmented_events_file_path,sorted_events[mask],fmt="%d")
+
+                print(str(sample_size)+" corners in total!")
                 print(str(path)+" is merged and sorted!")
                         
 
