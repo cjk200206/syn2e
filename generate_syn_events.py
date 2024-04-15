@@ -73,13 +73,13 @@ if __name__ == "__main__":
 
     func_names = [
         "syn_polygon",
-        "syn_multiple_polygons",
-        # "syn_lines",
-        # "syn_ellipses",
-        "syn_star",
-        "syn_checkboard",
-        # "syn_stripes",
-        # "syn_cube",
+        # "syn_multiple_polygons",
+        # # "syn_lines",
+        # # "syn_ellipses",
+        # "syn_star",
+        # "syn_checkboard",
+        # # "syn_stripes",
+        # # "syn_cube",
     ]
     for func_name in func_names:
         
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
                 #抽取一定比例的角点
                 length = len(event_corner_bin)
-                sample_size = int(length*0.05)
+                sample_size = int(length*0.1)
                 indices = np.random.choice(length, sample_size, replace=False)
                 event_corner_bin = event_corner_bin[indices]
 

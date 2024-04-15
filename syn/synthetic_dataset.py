@@ -50,6 +50,17 @@ def add_salt_and_pepper(img):
     cv.blur(img, (5, 5), img)
     return np.empty((0, 2), dtype=np.int)
 
+def add_salt_and_pepper_new(img):
+    """ Add salt and pepper noise to an image """
+    noise = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+    cv.randu(noise, 0, 255)
+    black = noise < 5
+    white = noise > 250
+    img[white > 0] = 255
+    img[black > 0] = 0
+    # cv.blur(img, (5, 5), img)
+    return np.empty((0, 2), dtype=np.int)
+
 
 def generate_background(size=(960, 1280), nb_blobs=100, min_rad_ratio=0.01,
                         max_rad_ratio=0.05, min_kernel_size=50, max_kernel_size=300):
